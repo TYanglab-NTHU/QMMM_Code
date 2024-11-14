@@ -1,0 +1,2 @@
+clear; squeue --me; echo; tail -5 slurm-255627.out 
+sbatch -p edr1_moderate_serial submit_stress03.sh

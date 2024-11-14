@@ -1,5 +1,5 @@
-# 23.10.2024 - Building a data base for the stress tests based on the archive file
-# - Starting with query03.py
+# 14.11.2024 - Build a new, more divese data base from the archive file
+# - Code files copied form Stress_Test_03 and modified
 
 # load modules for Python coding
 import sys                      # IO Basics
@@ -31,10 +31,10 @@ def fprintf(stream, format, *args):
   stream.write(format % args)
 
 # define the archive file
-archive = '/dicos_ui_home/tlankau/QMMM/Query04/OM_non_polymer.csv'
+archive = '/dicos_ui_home/tlankau/QMMM_Work/Stress_04/Query/OM_non_polymer.csv'
 
 # define the number of hits for the stress test
-max_hits = 750
+max_hits = 1000
 
 # a list to hold the CCDC identifier
 CCDC_ident = []
@@ -54,10 +54,14 @@ tm=["Sc", "Ti", "V" , "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
 re = ["Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb", "Lu"]
 # list of radiocative elements
 ra = ["Tc", "Po", "At", "Rn", "Fr", "Ra", "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No", "Lr"]
-# only mono-nuclear Fe, Mn cluster
+# only mono-nuclear Mn, Fe, Co, Ni, Cu, Ag complexes
 bad_tm = tm.copy()
-bad_tm.remove('Fe')
 bad_tm.remove('Mn')
+bad_tm.remove('Fe')
+bad_tm.remove('Co')
+bad_tm.remove('Ni')
+bad_tm.remove('Cu')
+bad_tm.remove('Ag')
 
 # initialize dictionary for counting stats
 cnt = {}
@@ -115,14 +119,37 @@ with open(archive, 'r', encoding='UTF-8') as file:
         if any(x in SMILES for x in bad_tm):
             inc_dict_cnt('bad_transition_metal')
             continue
-        if ('Fe' in SMILES) and ('Mn' in SMILES):
-            inc_dict_cnt('fe_and_mn')
+
+        # use sets for non mono-nuclear complexes
+        good_tm = {'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Ag'}
+        test_set = set()
+        for test_tm in good_tm:
+            if test_tm in SMILES:
+                test_set.add(test_tm)
+        if len(list(set(test_set) & set(good_tm))) > 1:
+            inc_dict_cnt('non_mono')
+            continue
+
+        #if ('Fe' in SMILES) and ('Mn' in SMILES):
+        #    inc_dict_cnt('fe_and_mn')
+        #    continue
+        if SMILES.count('Mn') > 1:
+            inc_dict_cnt('not_mn1')
             continue
         if SMILES.count('Fe') > 1:
             inc_dict_cnt('not_fe1')
             continue
-        if SMILES.count('Mn') > 1:
-            inc_dict_cnt('not_mn1')
+        if SMILES.count('Co') > 1:
+            inc_dict_cnt('not_co1')
+            continue
+        if SMILES.count('Ni') > 1:
+            inc_dict_cnt('not_ni1')
+            continue
+        if SMILES.count('Cu') > 1:
+            inc_dict_cnt('not_cu1')
+            continue
+        if SMILES.count('Ag') > 1:
+            inc_dict_cnt('not_ag1')
             continue
         # identify substructructures in the SMILES string
         if bool(True):
@@ -228,19 +255,20 @@ while cnt['hits'] < max_hits:
     # testing the coordination of the metal atoms
     skip=bool(True)
     for at in mol.atoms:
-        if at.atomic_symbol in ['Fe', 'Mn']:
+        if at.atomic_symbol in good_tm:
             koor=len(at.neighbours)
             # printf("%-12s %s %i\n", CCDC_trial, at.atomic_symbol, koor)
-            if koor==6: skip=bool(False)
+            inc_dict_cnt('cn'+str(koor))
+            if koor!=0: skip=bool(False)  # at least one bond
             break
     if skip:
         inc_dict_cnt('coord')
         continue
     print(f"%5i %2s %-12s %4i %i" % (cnt['hits'], at.atomic_symbol, CCDC_trial, len(mol.atoms), koor))
-    if at.atomic_symbol == 'Fe':
-        inc_dict_cnt('good_Fe')
-    if at.atomic_symbol == 'Mn':
-        inc_dict_cnt('good_Mn')
+    if at.atomic_symbol in good_tm:
+        inc_dict_cnt('good_'+at.atomic_symbol)
+    #if at.atomic_symbol == 'Fe':
+    #    inc_dict_cnt('good_Fe')
     inc_dict_cnt('hits')
     if bool(True):
         fname=entry.identifier
