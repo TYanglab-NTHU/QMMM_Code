@@ -1,14 +1,12 @@
 ################################################################################
-# 12.11.2024 (Q17_CCDCTY, adjustments for Ting Yee's Au cluster)
-# This Python code holds all the functions to be imported
-# - add a switch vor distant neighbours via the coordination number
-# - add a version string
-# 15.11.2024 (Q18_CCDC)
-# - a short wait added to ley the disks to react to changes
+# 16.11.2024 Q19_CCDC
+# - add version directory VersDir
 ################################################################################
 
 # set version string
-Version='qm18-20241115'
+Version='qm19-20241116'
+# set directory
+VersDir='/dicos_ui_home/tlankau/QMMM_Code/Q19_CCDC'
 
 # Import basic Python modules
 import sys                      # IO Basics
@@ -33,7 +31,7 @@ from ccdc.molecule import Bond                  # Bond properties
 from openbabel import openbabel as ob           # basic OpenBabel
 
 # Import my modules
-sys.path.append('/dicos_ui_home/tlankau/QMMM/Q18_CCDC')
+sys.path.append(VersDir)
 import globals as gb  # short for globals
 
 ################################################################################
@@ -454,11 +452,11 @@ def read_input_file(inp_name):
         print('  -> add missing H atoms')
       gb.mol.add_hydrogens(mode='missing', add_sites=True)
       if gb.VerboseFlag>0:
-        print('  -> write ./aux_add_H.mol2')
-      mol_writer = io.MoleculeWriter('./aux_add_H.mol2')
+        print('  -> write aux_add_H.mol2')
+      mol_writer = io.MoleculeWriter('aux_add_H.mol2')
       mol_writer.write(gb.mol)
       if gb.VerboseFlag>0:
-        print('  -> set ./aux_add_H.mol2 as the new mol input file')
+        print('  -> set aux_add_H.mol2 as the new mol input file')
         print('  -> Wait 120 sec to let the discs relax')
       time.sleep(120)
       inp_name = 'aux_add_H.mol2'
@@ -470,10 +468,24 @@ def read_input_file(inp_name):
   obConversion = ob.OBConversion()
   obConversion.SetInAndOutFormats("mol2", "mol2")
   gb.obmol = ob.OBMol()
-  obConversion.ReadFile(gb.obmol, inp_name)
+
+  if os.path.exists(inp_name):
+    try:
+      obConversion.ReadFile(gb.obmol, inp_name)
+    except:
+      if gb.VerboseFlag > 0:
+        print('OpenBabel raised an exception')
+      exit() # replace by an better exit code
+  else:
+    printf("%s not found\n", inp_name)
+    exit()
+  if gb.obmol.NumAtoms() == 0 :
+    print('OpenBabel object has no atoms')
+    exit()
   if (not H_flag) and (gb.VerboseFlag==0):
     if os.path.exists("./aux_add_H.mol2"):
       os.remove("./aux_add_H.mol2")
+
   if gb.VerboseFlag > 0:
     printf("  compare the molecular geometries of both objects\n")
   csdanz = len(gb.mol.atoms)
@@ -481,8 +493,7 @@ def read_input_file(inp_name):
   if gb.VerboseFlag==2:
     printf("  Number of atoms: CSD %i   OB %i\n", csdanz, obanz)
   if csdanz != obanz:
-    print("The number of atoms in both molecule objects (CSD:  %i, OB: %i) don't match",
-          csdanz, obanz)
+    printf("The number of atoms in both molecule objects (CSD:  %i, OB: %i) don't match\n", csdanz, obanz)
     exit()
   else:
     if gb.VerboseFlag>0:
