@@ -375,10 +375,12 @@ def read_input_file(inp_name):
   path, file = os.path.split(inp_name)
   path += '/'
   base = root.replace(path, '')
+  aux_file = path + 'aux_add_H.mol2'
   if gb.VerboseFlag == 2:
     print("ext  ", ext)
     print("path ", path)
     print("base ", base)
+    print("aux  ", aux_file)
 
   # check if the file exists
   if not os.path.isfile(inp_name):
@@ -452,14 +454,14 @@ def read_input_file(inp_name):
         print('  -> add missing H atoms')
       gb.mol.add_hydrogens(mode='missing', add_sites=True)
       if gb.VerboseFlag>0:
-        print('  -> write aux_add_H.mol2')
-      mol_writer = io.MoleculeWriter('aux_add_H.mol2')
+        printf('  -> write %s\n', aux_file)
+      mol_writer = io.MoleculeWriter(aux_file)
       mol_writer.write(gb.mol)
       if gb.VerboseFlag>0:
-        print('  -> set aux_add_H.mol2 as the new mol input file')
+        print(f'  -> set %s as the new mol input file' % (aux_file))
         print('  -> Wait 0 sec to let the discs relax')
       time.sleep(0)
-      inp_name = 'aux_add_H.mol2'
+      inp_name = aux_file
 
   # At this point I should have a CSD molecule object.
   # build auxiliary OpenBabel molecule object by reading the mol2 file
@@ -480,12 +482,12 @@ def read_input_file(inp_name):
     exit()
   if gb.obmol.NumAtoms() == 0 :
     if gb.VerboseFlag>0:
-      print('  OpenBabel object has no atoms -> rturn(None, None)')
-    return(None, None)
+      print('  OpenBabel object has no atoms -> return(None, None)')
+    return(None, None, aux_file)
 
-  if (not H_flag) and (gb.VerboseFlag==0):
-    if os.path.exists("./aux_add_H.mol2"):
-      os.remove("./aux_add_H.mol2")
+  # if (not H_flag) and (gb.VerboseFlag==0):
+  #   if os.path.exists(aux_file):
+  #     os.remove(aux_file)
   if gb.VerboseFlag > 0:
     printf("  compare the molecular geometries of both objects\n")
   csdanz = len(gb.mol.atoms)
@@ -539,7 +541,7 @@ def read_input_file(inp_name):
       exit()
   if gb.VerboseFlag>0: printf("    the geometries of both objects match\n")
   # return both molecule objects
-  return(gb.mol, gb.obmol)
+  return(gb.mol, gb.obmol, aux_file)
 
 ################################################################################
 # functions for the compartimensation of the  QM/MM separation                 #
