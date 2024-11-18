@@ -457,8 +457,8 @@ def read_input_file(inp_name):
       mol_writer.write(gb.mol)
       if gb.VerboseFlag>0:
         print('  -> set aux_add_H.mol2 as the new mol input file')
-        print('  -> Wait 120 sec to let the discs relax')
-      time.sleep(120)
+        print('  -> Wait 0 sec to let the discs relax')
+      time.sleep(0)
       inp_name = 'aux_add_H.mol2'
 
   # At this point I should have a CSD molecule object.
@@ -473,19 +473,19 @@ def read_input_file(inp_name):
     try:
       obConversion.ReadFile(gb.obmol, inp_name)
     except:
-      if gb.VerboseFlag > 0:
-        print('OpenBabel raised an exception')
+      print('OpenBabel raised an exception')
       exit() # replace by an better exit code
   else:
     printf("%s not found\n", inp_name)
     exit()
   if gb.obmol.NumAtoms() == 0 :
-    print('OpenBabel object has no atoms')
-    exit()
+    if gb.VerboseFlag>0:
+      print('  OpenBabel object has no atoms -> rturn(None, None)')
+    return(None, None)
+
   if (not H_flag) and (gb.VerboseFlag==0):
     if os.path.exists("./aux_add_H.mol2"):
       os.remove("./aux_add_H.mol2")
-
   if gb.VerboseFlag > 0:
     printf("  compare the molecular geometries of both objects\n")
   csdanz = len(gb.mol.atoms)

@@ -13,6 +13,7 @@ import sys                      # IO Basics
 import glob                     # wild cards in file names
 import os                       # access file system
 import math                     # mathematical  functions
+import shutil                   # functions to handle files in disc
 
 # Import CCDC modules (CSD Python API)
 from ccdc          import io                    # read crystal structures
@@ -137,6 +138,28 @@ if os.path.exists("./combi.xyz"): os.remove("./combi.xyz")
 
 # read input file
 gb.mol, gb.obmol = qms.read_input_file(inp_name)
+if gb.mol == None and gb.obmol == None:
+  inp_name_new = ".".join(inp_name.split('.')[0:-1])+"_add.mol2"
+  if gb.VerboseFlag>0:
+    print("  The addition of missing H atoms failed.")
+    print(f"  Create new input file %s." % (inp_name_new))
+  try:
+    shutil.copyfile("./aux_add_H.mol2", "./"+inp_name_new)
+  except:
+    print(f"  Copy of aux_add_H.mol2 to %s failed" % (inp_name_new))
+    exit()
+  if gb.VerboseFlag>0:
+    print("  Reset variables and try try to read", inp_name_new)
+  VerboseFlag_old = gb.VerboseFlag
+  del gb.mol, gb.obmol, gb.qm, gb.mm, gb.dnts
+  del gb.VerboseFlag, gb.conju_twist_angle, gb.met_min_lig_num, gb.del_H_from_list
+  gb.init()
+  gb.VerboseFlag = VerboseFlag_old
+  del VerboseFlag_old
+  gb.mol, gb.obmol = qms.read_input_file(inp_name_new)
+  if gb.mol == None and gb.obmol == None:
+    print("Something is still terribly wrong with the additional H atoms")
+    exit()
 
 # optional part ofthe setup
 if gb.VerboseFlag>0: print()
