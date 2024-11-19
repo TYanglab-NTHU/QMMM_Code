@@ -1,6 +1,7 @@
 ################################################################################
-# 16.11.2024 Q19_CCDC
+# 19.11.2024 Q19_CCDC
 # - add version directory VersDir
+# - improve path management for input files (line #377)
 ################################################################################
 
 # set version string
@@ -374,6 +375,8 @@ def read_input_file(inp_name):
   root, ext = os.path.splitext(inp_name)
   path, file = os.path.split(inp_name)
   path += '/'
+  if path == '/':
+    path = './'
   base = root.replace(path, '')
   aux_file = path + 'aux_add_H.mol2'
   if gb.VerboseFlag == 2:

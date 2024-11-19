@@ -63,7 +63,7 @@ for file in job_list:
   reread_flag=bool(False)
 
   ##############################################################################
-  # Do the QMM/MM separation                                                   #
+  # Do the actual QMM/MM separation                                            #
   ##############################################################################
 
   # set output verbosity
